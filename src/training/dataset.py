@@ -48,10 +48,10 @@ class PositionDataset(Dataset):
         evaluation: float = self.evaluations[index]
 
         # Create PyTorch tensors
-        stm_tensor = torch.tensor(stm_embedding, dtype=torch.float64)
-        nstm_tensor = torch.tensor(nstm_embedding, dtype=torch.float64)
+        stm_tensor = torch.tensor(stm_embedding, dtype=torch.float32)
+        nstm_tensor = torch.tensor(nstm_embedding, dtype=torch.float32)
         bucket_tensor = torch.tensor(bucket_id, dtype=torch.int64)
-        eval_tensor = torch.tensor(evaluation, dtype=torch.float64)
+        eval_tensor = torch.tensor(evaluation, dtype=torch.float32)
 
         return stm_tensor, nstm_tensor, bucket_tensor, eval_tensor
 

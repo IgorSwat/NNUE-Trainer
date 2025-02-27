@@ -8,3 +8,6 @@ data/*
 
 model/*
 !model/.gitkeep
+
+external/**
+!external/.gitkeep

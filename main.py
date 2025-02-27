@@ -1,52 +1,73 @@
 from src.utilities.data_read import print_data
+from src.utilities.evaluations import Evaluator, normalize
 from src.utilities.data_processing import create_dataset, normalize_dataset
 from src.training.embeddings import create_embedding
 from src.training.dataset import PositionDataset
-from src.training.training import train, evaluate
+from src.training.training import train
+from src.training.testing import evaluate
 from src.networks.arch2 import NNUE
 from src.networks.misc import SCALE, QA, QB
 from config import *
 
+from functools import partial
+
 import pandas as pd
 import numpy as np
 import chess
+import chess.engine
 import torch
+import torch.quantization as quant
 from torchsummary import summary
 
 
 if __name__ == "__main__":
     # print_data(RAW_DATA_FILEPATH, 30)
 
-    # create_dataset(RAW_DATA_FILEPATH, TRAINING_SET_FILEPATH, 5000000, reader_chain_size=5,
-    #                min_bucket_size=200000, min_subclass_size=50000)
-    # create_dataset(RAW_DATA_FILEPATH, TEST_SET_FILEPATH, 10000,
-    #                 buckets=8, max_eval_diff=70, start_from=2432394)
+    # Create training dataset
+    # create_dataset(input_filepath=RAW_DATA_FILEPATH, output_filepath=DATA_LOC + "dataset_big.parquet", 
+    #                engine_filepath=STOCKFISH_FILEPATH,
+    #                size=20000000,
+    #                min_bucket_size=2000000, min_subclass_size=100000,
+    #                reader_chain_size=5, start_from=6095943)
 
-    # normalize_dataset(TRAINING_SET_FILEPATH, float(SCALE) / (QA * QB))
+    # Create test dataset
+    # create_dataset(input_filepath=RAW_DATA_FILEPATH, output_filepath=TEST_SET_FILEPATH,
+    #                 engine_filepath=STOCKFISH_FILEPATH,
+    #                 size=50000,
+    #                 min_bucket_size=3000, min_subclass_size=500, 
+    #                 reader_chain_size=10, start_from=6000000)
+    # Last: 6095942
+
+    # normalization_factor: float = SCALE / (QA * QB)
+    # normalize_dataset(dataset_filepath=DATA_LOC + "dataset_standard.parquet",
+    #                   output_filepath=DATA_LOC + "dataset_standard_normalized.parquet",
+    #                   normalizer=partial(normalize, factor=normalization_factor))
     
     # pd.set_option("display.max_colwidth", 100)
-    # data = pd.read_parquet(TRAINING_SET_FILEPATH)
+    # data = pd.read_parquet(DATA_LOC + "dataset_standard_normalized.parquet")
     # print(data.head(20))
 
     nnue = NNUE()
-    nnue.load_state_dict(torch.load(MODEL_FILEPATH))
+    nnue.load_state_dict(torch.load(MODEL_LOC + "model_plain_best.pth"))
 
-    # 30 done for now
-    train(nnue, TRAINING_SET_FILEPATH, MODEL_FILEPATH, epochs=100, batch_size=256)
+    # evaluate(nnue, TEST_SET_FILEPATH, normalizer=partial(normalize, factor=normalization_factor))
 
-    # evaluate()
+    train(nnue, DATA_LOC + "dataset_big.parquet", MODEL_FILEPATH, epochs=50, batch_size=32)
+
     # nnue.eval()
-
-    # fen = "5k1r/pp2pP2/8/8/5Rp1/1N2Q1K1/P1q3P1/3r4 b - - 1 32"
-    # stm_embeddings = create_embedding(fen, stm_perspective=True)
-    # nstm_embeddings = create_embedding(fen, stm_perspective=False)
 
     # def count_pieces(fen: str) -> int:
     #     return sum(1 for char in fen.split(" ")[0] if char.isalpha())
-        
-    # bucket_divisor = (32 + 8 - 1) // 8
-    # bucket_id = (count_pieces(fen) - 2) // bucket_divisor
+    
+    # while True:
+    #     fen = input(">>>")
 
-    # eval = nnue(torch.tensor(stm_embeddings, dtype=torch.float64).unsqueeze(0), torch.tensor(nstm_embeddings, dtype=torch.float64).unsqueeze(0),
-    #             torch.tensor(7, dtype=torch.long).unsqueeze(0))
-    # print(eval.item())
+    #     stm_embeddings = create_embedding(fen, stm_perspective=True)
+    #     nstm_embeddings = create_embedding(fen, stm_perspective=False)
+        
+    #     bucket_divisor = (32 + 8 - 1) // 8
+    #     bucket_id = (count_pieces(fen) - 2) // bucket_divisor
+
+    #     eval = nnue(torch.tensor(stm_embeddings, dtype=torch.float32).unsqueeze(0), torch.tensor(nstm_embeddings, dtype=torch.float32).unsqueeze(0),
+    #                 torch.tensor(bucket_id, dtype=torch.long).unsqueeze(0))
+    #     print(eval.item())

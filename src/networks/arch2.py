@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 from .misc import CReLU, SCReLU, Sigmoid, QA, QB, SCALE
+from ..utilities.evaluations import normalize
 
 
 # -------------------
@@ -20,17 +21,15 @@ class NNUE(nn.Module):
 
         # One shared layer which serves as accumulator
         # - To ensure both perspectives have identical weights and biases, this one layer represents both of them
-        self.accumulator = nn.Linear(INPUT_SIZE, ACCUMULATOR_SIZE, dtype=torch.float64)
+        self.accumulator = nn.Linear(INPUT_SIZE, ACCUMULATOR_SIZE, dtype=torch.float32)
 
         # Output layer(s)
         # Uses output bucket technique to provide different weights as biases depending on number of pieces on the board(bucket)
-        self.output_layers = nn.ModuleList([nn.Linear(2 * ACCUMULATOR_SIZE, OUTPUT_SIZE, dtype=torch.float64) for _ in range(no_buckets)])
+        self.output_layers = nn.ModuleList([nn.Linear(2 * ACCUMULATOR_SIZE, OUTPUT_SIZE, dtype=torch.float32) for _ in range(no_buckets)])
 
-        # Activation function - SCReLU
-        self.activation = SCReLU(Qa=QA)
-
-        # Activation on output - standard logistic function with normalization
-        self.sigmoid = Sigmoid(Qa=QA, Qb=QB, Scale=SCALE, use_Qa=True)
+        # Activation function - ReLU6
+        # - This is basically a modified CReLU
+        self.activation = nn.ReLU6()
     
     def forward(self, stm_embeddings, nstm_embeddings, selectors):
         # Process inputs with two accumulators
@@ -38,7 +37,7 @@ class NNUE(nn.Module):
         nstm_values = self.accumulator(nstm_embeddings)
 
         # Concatenate two perspectives into one bigger layer
-        # - Accumulator corresponding to side to move is always put first
+        # - Accumulator corresponding to side to move is always put firsts
         # - This trick allows to get rid of side to move parameter from input layer
         combined = torch.cat((stm_values, nstm_values), dim=1)
 
@@ -51,8 +50,5 @@ class NNUE(nn.Module):
 
         selectors_expanded = selectors.unsqueeze(-1).expand(stm_embeddings.size(0), 1, outputs.size(-1))
         selected_output = outputs.gather(dim=1, index=selectors_expanded).squeeze(1)
-
-        # Normalization
-        selected_output = self.sigmoid(selected_output)
 
         return selected_output

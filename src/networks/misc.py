@@ -19,24 +19,22 @@ QB = 64
 
 # CReLU
 class CReLU(nn.Module):
-    def __init__(self, M: int = 1):
+    def __init__(self, M: float = 1.0):
         super(CReLU, self).__init__()
-
         self.M = M
     
     def forward(self, x):
-        return torch.clamp(x, 0, self.M)
+        return torch.clamp(x, 0.0, self.M)
 
 # SCReLU is a modified version of ReLU, with the following formula: f(x) = clamp(x, 0, M)^2
 # - An additional parameter M defines maximal range for clamp operations
 # - By default M = 1
 class SCReLU(nn.Module):
-    def __init__(self, Qa: float = 1.0):
+    def __init__(self):
         super(SCReLU, self).__init__()
-        self.register_buffer("Qa", torch.tensor(Qa, dtype=torch.float32))
 
     def forward(self, x):
-        return torch.clamp(x, 0, self.Qa) ** 2
+        return torch.clamp(x, 0.0, 1.0) ** 2
     
 # Standard logistic function with normalization
 class Sigmoid(nn.Module):

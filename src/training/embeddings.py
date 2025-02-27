@@ -32,7 +32,7 @@ def create_embedding(fen: str, stm_perspective: bool) -> np.ndarray:
 
     # Step 1 - determine side to move
     # - Important for selecting the right perspective
-    side_to_move: chess.Color = chess.WHITE if fen.find("w") else chess.BLACK
+    side_to_move: chess.Color = chess.WHITE if fen.find("w") != -1 else chess.BLACK     # LOL
     perspective: chess.Color = side_to_move if stm_perspective else not side_to_move
 
     # Indices of rank and file, will be used to identify squares
