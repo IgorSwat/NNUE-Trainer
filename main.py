@@ -65,20 +65,20 @@ if __name__ == "__main__":
 
     # train(nnue, DATA_LOC + "dataset_big.parquet", MODEL_FILEPATH, epochs=30, batch_size=32)
 
-    nnue.eval()
+    # nnue.eval()
 
-    def count_pieces(fen: str) -> int:
-        return sum(1 for char in fen.split(" ")[0] if char.isalpha())
+    # def count_pieces(fen: str) -> int:
+    #     return sum(1 for char in fen.split(" ")[0] if char.isalpha())
     
-    while True:
-        fen = input(">>>")
+    # while True:
+    #     fen = input(">>>")
 
-        stm_embeddings = create_embedding(fen, stm_perspective=True)
-        nstm_embeddings = create_embedding(fen, stm_perspective=False)
+    #     stm_embeddings = create_embedding(fen, stm_perspective=True)
+    #     nstm_embeddings = create_embedding(fen, stm_perspective=False)
         
-        bucket_divisor = (32 + 8 - 1) // 8
-        bucket_id = (count_pieces(fen) - 2) // bucket_divisor
+    #     bucket_divisor = (32 + 8 - 1) // 8
+    #     bucket_id = (count_pieces(fen) - 2) // bucket_divisor
 
-        eval = nnue(torch.tensor(stm_embeddings, dtype=torch.float32).unsqueeze(0), torch.tensor(nstm_embeddings, dtype=torch.float32).unsqueeze(0),
-                    torch.tensor(bucket_id, dtype=torch.long).unsqueeze(0))
-        print(eval.item())
+    #     eval = nnue(torch.tensor(stm_embeddings, dtype=torch.float32).unsqueeze(0), torch.tensor(nstm_embeddings, dtype=torch.float32).unsqueeze(0),
+    #                 torch.tensor(bucket_id, dtype=torch.long).unsqueeze(0))
+    #     print(eval.item())
