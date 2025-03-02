@@ -155,7 +155,8 @@ def quantize(nnue: NNUE, alpha: float, beta: float) -> None:
 # Save quantized model's binary data to .nnue file
 def save(nnue: NNUE, output_filepath: str):
     # Convert accumulator parameters to integers
-    acc_weights = nnue.accumulator.weight.detach().numpy().astype(dtype=np.int16)
+    # - NOTE: Very important transposition of acc_weights, as shape is reversed from C++ side
+    acc_weights = nnue.accumulator.weight.detach().numpy().astype(dtype=np.int16).T
     acc_biases = nnue.accumulator.bias.detach().numpy().astype(dtype=np.int16)
 
     # Convert output bucket parameters to integers

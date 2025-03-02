@@ -7,6 +7,7 @@ from src.training.training import train
 from src.training.testing import evaluate
 from src.networks.arch2 import NNUE
 from src.networks.misc import SCALE, QA, QB
+from src.networks.quantize import acc_sum_range, out_sum_range, quantize, save
 from config import *
 
 from functools import partial
@@ -38,7 +39,7 @@ if __name__ == "__main__":
     #                 reader_chain_size=10, start_from=6000000)
     # Last: 6095942
 
-    # normalization_factor: float = SCALE / (QA * QB)
+    normalization_factor: float = SCALE / (QA * QB)
     # normalize_dataset(dataset_filepath=DATA_LOC + "dataset_standard.parquet",
     #                   output_filepath=DATA_LOC + "dataset_standard_normalized.parquet",
     #                   normalizer=partial(normalize, factor=normalization_factor))
@@ -48,26 +49,36 @@ if __name__ == "__main__":
     # print(data.head(20))
 
     nnue = NNUE()
-    nnue.load_state_dict(torch.load(MODEL_LOC + "model_plain_best.pth"))
+    nnue.load_state_dict(torch.load(MODEL_LOC + "model_best.pth"))
+
+    print("Accumulator sum range:", acc_sum_range(nnue.accumulator))
+    print("Output sum range:", out_sum_range(nnue.output_layers))
+
+    alpha = 100
+    beta = 100
+
+    quantize(nnue, alpha, beta)
 
     # evaluate(nnue, TEST_SET_FILEPATH, normalizer=partial(normalize, factor=normalization_factor))
 
-    train(nnue, DATA_LOC + "dataset_big.parquet", MODEL_FILEPATH, epochs=50, batch_size=32)
+    # save(nnue, MODEL_LOC + "model_best.nnue")
 
-    # nnue.eval()
+    # train(nnue, DATA_LOC + "dataset_big.parquet", MODEL_FILEPATH, epochs=30, batch_size=32)
 
-    # def count_pieces(fen: str) -> int:
-    #     return sum(1 for char in fen.split(" ")[0] if char.isalpha())
+    nnue.eval()
+
+    def count_pieces(fen: str) -> int:
+        return sum(1 for char in fen.split(" ")[0] if char.isalpha())
     
-    # while True:
-    #     fen = input(">>>")
+    while True:
+        fen = input(">>>")
 
-    #     stm_embeddings = create_embedding(fen, stm_perspective=True)
-    #     nstm_embeddings = create_embedding(fen, stm_perspective=False)
+        stm_embeddings = create_embedding(fen, stm_perspective=True)
+        nstm_embeddings = create_embedding(fen, stm_perspective=False)
         
-    #     bucket_divisor = (32 + 8 - 1) // 8
-    #     bucket_id = (count_pieces(fen) - 2) // bucket_divisor
+        bucket_divisor = (32 + 8 - 1) // 8
+        bucket_id = (count_pieces(fen) - 2) // bucket_divisor
 
-    #     eval = nnue(torch.tensor(stm_embeddings, dtype=torch.float32).unsqueeze(0), torch.tensor(nstm_embeddings, dtype=torch.float32).unsqueeze(0),
-    #                 torch.tensor(bucket_id, dtype=torch.long).unsqueeze(0))
-    #     print(eval.item())
+        eval = nnue(torch.tensor(stm_embeddings, dtype=torch.float32).unsqueeze(0), torch.tensor(nstm_embeddings, dtype=torch.float32).unsqueeze(0),
+                    torch.tensor(bucket_id, dtype=torch.long).unsqueeze(0))
+        print(eval.item())

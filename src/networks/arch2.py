@@ -51,4 +51,8 @@ class NNUE(nn.Module):
         selectors_expanded = selectors.unsqueeze(-1).expand(stm_embeddings.size(0), 1, outputs.size(-1))
         selected_output = outputs.gather(dim=1, index=selectors_expanded).squeeze(1)
 
+        print(selected_output)
+
+        selected_output = selected_output // (100 * 100)
+
         return selected_output
