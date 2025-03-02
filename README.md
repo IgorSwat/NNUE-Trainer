@@ -12,4 +12,22 @@ Lichess database provides milions of positions with ready engine evaluation, per
 2. Perform a quiescence search type of transformation for positions where best move is either capture, check or promotion
 3. Replace evaluations from lichess database with static evaluations using Stockfish
 
+The final training set size was over 26 million elements.
+
 ## Architecture
+The architecture of trained model consists of following elements:
+- Input layer with **768** neurons - each neuron represents a possible combination of piece color, piece type and square and contains logical 0 (when no piece of given color and type is present on given square) or 1 (the opposite situation)
+- Hidden layer with **2 * 1024 neurons** - hidden layer consists of two *accumulators* - one for side to move, and the other for other side. Each of them contains 1024 neurons and has the same weights and biases.
+- **8** separate output layers (output buckets) - each of them with **1** neuron and separate weights and biases. Each output bucket represents given stage of the game, and the choice of which to use depends on number of non-king pieces on the board
+- **CReLU (Clipped ReLU)** activation function - or, to be precise, ReLU6 activation function, which is essentially a variant of CReLU<br><br>
+![Network architecture](md/network.png)
+
+## Results
+Not ready yet, will be added after ChessEngine project gets finished.
+
+## Future improvements
+This project uses the most basic methods, which are possible to implement in the context of hardware limitations. It is essentially the equivalent of "Hello World" in the field of applying neural networks to chess. For this reason, the range of potential improvements and directions for development is wide and includes, among others:
+- Increasing the amount of training data (to billions of positions instead of millions)
+- Experimenting with network architecture - for exmple, by adding more hidden layers
+- Applying more advanced NNUE techniques such as king buckets (see [this](https://www.chessprogramming.org/NNUE))
+- Applying reinforcement learning methods
